@@ -5,82 +5,106 @@
   <title>Day Trip</title>
   <style media="screen">
   #map {
-     height: 400px;
-     width: 100%;
-    }
+    height: 400px;
+    width: 100%;
+  }
   </style>
 
   <script async defer
   src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB6JOHDECt2ZLqraMNaS4vHjmNxNkwPpFE&callback=initMap">
   </script>
-
+  <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB6JOHDECt2ZLqraMNaS4vHjmNxNkwPpFE&libraries=places">
+  </script>
 </head>
+
+
+
 <body>
-  <p> <span id="weather"> Supposed Location </span> </p>
-  <p> <span id="temp"> Supposed Temp </span></p>
-  <p> <span id="wind"> Supposed Wind</span></p>
+  <p> <span id="weather"> API call to Location not working </span> </p>
+  <p> <span id="temp"> API call to Temp not working </span></p>
+  <p> <span id="wind"> API call to Wind not working </span></p>
+  <p> <span id="rain"> API call to rain not working </span></p>
+  <p> <span id="conditions"> API call to goodWeather not working </span></p>
 
 
-  <h3>My Google Maps Demo</h3>
-    <div id="map"></div>
-
-  <h3>Map 2 with Specific Access Points</h3>
-    <div id="map2"></div>
-
-
-
-
-
-
-
-
+  <h3>Google Maps Playground</h3>
+  <div id="map"></div>
 
   <script type="text/javascript">
   var weather = new XMLHttpRequest();
   weather.open("GET","http://api.wunderground.com/api/a8bd81c050139326/conditions/q/CA/San_Francisco.json", false);
   weather.send(null);
-  var r = JSON.parse(weather.response);
+  var wundergroundCall = JSON.parse(weather.response);
+  var dis = "Current Location: " + wundergroundCall.current_observation.display_location.full + "<br/>";
+  var latitude = parseFloat(wundergroundCall.current_observation.display_location.latitude);
+  var longitude =  parseFloat(wundergroundCall.current_observation.display_location.longitude);
 
-  var dis = "Current Location: " + r.current_observation.display_location.full + "<br/>";
-  var latitude = parseFloat(r.current_observation.display_location.latitude);
-  var longitude =  parseFloat(r.current_observation.display_location.longitude);
-
-  var temp = "Current Temp " + r.current_observation.temperature_string + "<br/>";
+  var temp = "Current Temp " + wundergroundCall.current_observation.temperature_string + "<br/>";
   //
-  var wind = "Current Wind " + r.current_observation.wind_string + "<br/>";
+  var wind = "Current Wind " + wundergroundCall.current_observation.wind_string + "<br/>";
 
   document.getElementById("weather").innerHTML  = dis;
   document.getElementById('temp').innerHTML  = temp;
   document.getElementById('wind').innerHTML  = wind;
-
-
-
   </script>
 
   <script>//makes the google maps
-  // var queriedLocation, map2;
-    function initMap() {
-      var queriedLocation = {lat: latitude, lng: longitude};
-      var map = new google.maps.Map(document.getElementById('map'), {
-        zoom: 22,
-        center: queriedLocation
-      });
-      var marker = new google.maps.Marker({
-        position: queriedLocation,
-        map: map
-      });
+  function initMap() {
+    var queriedLocation = {lat: latitude, lng: longitude};
+    var map = new google.maps.Map(document.getElementById('map'), {
+      zoom: 15,
+      center: queriedLocation
+    });
+    var marker = new google.maps.Marker({
+      position: queriedLocation,
+      map: map
+    });
+  }
 
-    //
-    // var queriedLocation = {lat: latitude, lng: longitude};
-    // var map2 = new google.maps.Map(document.getElementById('map2'), {
-    //   zoom: 4,
-    //   center: queriedLocation
-    // });
-    // var marker = new google.maps.Marker({
-    //   position: queriedLocation,
-    //   map: map2
-    // });
-}
+  var goodWeather = ["clear","cloudy","sunny","partlysunny","partlycloudy","mostlysunny","mostlycloudy", "rainy"];
+  var currentWeather = false;
+
+  function currentWeatherGood(){
+    var condition = wundergroundCall.current_observation.weather;
+    for (var i = 0; i < goodWeather.length; i++) {
+      if (condition.toLowerCase() == goodWeather[i]){
+        currentWeather = true;
+      }
+    }
+  }
+
+  currentWeatherGood();
+
+  function isCurrentWeatherGood(currentWeather){
+    if (currentWeather){
+      document.getElementById('conditions').innerHTML = "Weather is gucci <br/>"
+    }
+    else{
+      document.getElementById('conditions').innerHTML = "Issa bad weather <br/> ";
+    }
+  }
+
+  isCurrentWeatherGood(currentWeather);
+
+
+  var twentyFourHourPrecipitation =  parseFloat(wundergroundCall.current_observation.precip_today_metric);
+  //would this work in to predict weather conditions even if dry?
+  document.getElementById('rain').innerHTML = "24 Hour Precipitation :" + twentyFourHourPrecipitation + "</br>";
+
+
+  //
+  // function initMap2() {
+  //
+  //     var queriedLocation = {lat: latitude, lng: longitude};
+  //     var map2 = new google.maps.Map(document.getElementById('map2'), {
+  //       zoom: 4,
+  //       center: queriedLocation
+  //     });
+  //     var marker = new google.maps.Marker({
+  //       position: queriedLocation,
+  //       map: map2
+  //     });
+  //   }
   </script>
 
 </body>
