@@ -1,111 +1,129 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="utf-8">
-  <title>Day Trip</title>
-  <style media="screen">
-  #map {
-    height: 400px;
-    width: 100%;
-  }
-  </style>
 
-  <script async defer
-  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB6JOHDECt2ZLqraMNaS4vHjmNxNkwPpFE&callback=initMap">
-  </script>
-  <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB6JOHDECt2ZLqraMNaS4vHjmNxNkwPpFE&libraries=places">
-  </script>
+<head>
+    <meta charset="utf-8">
+    <title>Day Trip</title>
+    <style media="screen">
+        #map {
+            height: 400px;
+            width: 100%;
+        }
+    </style>
+    <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB6JOHDECt2ZLqraMNaS4vHjmNxNkwPpFE&libraries=places">
+    </script>
 </head>
 
-
-
 <body>
-  <p> <span id="weather"> API call to Location not working </span> </p>
-  <p> <span id="temp"> API call to Temp not working </span></p>
-  <p> <span id="wind"> API call to Wind not working </span></p>
-  <p> <span id="rain"> API call to rain not working </span></p>
-  <p> <span id="conditions"> API call to goodWeather not working </span></p>
+    <p> <span id="weather"> API call to Location not working </span> </p>
+    <p> <span id="temp"> API call to Temp not working </span></p>
+    <p> <span id="wind"> API call to Wind not working </span></p>
+    <p> <span id="rain"> API call to 24 hour rain not working </span></p>
+    <p> <span id="conditions"> API call to goodWeather not working </span></p>
+
+    <h3>Google Maps Playground</h3>
+    <div id="map"></div>
+
+    <script type="text/javascript">
+        //gets the weather data from wunderground.com
+        var weatherStation = "http://api.wunderground.com/api/a8bd81c050139326/conditions/q/CA/" + "San_Francisco" + ".json";
+        var weather = new XMLHttpRequest();
+        weather.open("GET", weatherStation, false);
+        weather.send(null);
+        var wundergroundCall = JSON.parse(weather.response);
+        var dis = "Current Location: " + wundergroundCall.current_observation.display_location.full + "<br/>";
+        var latitude = parseFloat(wundergroundCall.current_observation.display_location.latitude);
+        var longitude = parseFloat(wundergroundCall.current_observation.display_location.longitude);
+
+        var temp = "Current Temp " + wundergroundCall.current_observation.temperature_string + "<br/>";
+        //
+        var wind = "Current Wind " + wundergroundCall.current_observation.wind_string + "<br/>";
+
+        document.getElementById("weather").innerHTML = dis;
+        document.getElementById('temp').innerHTML = temp;
+        document.getElementById('wind').innerHTML = wind;
 
 
-  <h3>Google Maps Playground</h3>
-  <div id="map"></div>
+                //sets the weather conditions to either good or bad
+                var goodWeather = ["clear", "cloudy", "sunny", "partlysunny", "partlycloudy", "mostlysunny", "mostlycloudy", "rainy", "overcast"];
+                var currentWeather = false;
 
-  <script type="text/javascript">
-  var weather = new XMLHttpRequest();
-  weather.open("GET","http://api.wunderground.com/api/a8bd81c050139326/conditions/q/CA/San_Francisco.json", false);
-  weather.send(null);
-  var wundergroundCall = JSON.parse(weather.response);
-  var dis = "Current Location: " + wundergroundCall.current_observation.display_location.full + "<br/>";
-  var latitude = parseFloat(wundergroundCall.current_observation.display_location.latitude);
-  var longitude =  parseFloat(wundergroundCall.current_observation.display_location.longitude);
+                function currentWeatherCondition() {
+                    var condition = wundergroundCall.current_observation.weather;
+                    for (var i = 0; i < goodWeather.length; i++) {
+                        if (condition.toLowerCase() == goodWeather[i]) {
+                            currentWeather = true;
+                            break;
+                        }
+                    }
+                }
 
-  var temp = "Current Temp " + wundergroundCall.current_observation.temperature_string + "<br/>";
-  //
-  var wind = "Current Wind " + wundergroundCall.current_observation.wind_string + "<br/>";
+                currentWeatherCondition();
 
-  document.getElementById("weather").innerHTML  = dis;
-  document.getElementById('temp').innerHTML  = temp;
-  document.getElementById('wind').innerHTML  = wind;
-  </script>
+                function renderCurrentWeather(currentWeather) {
+                    if (currentWeather) {
+                        document.getElementById('conditions').innerHTML = "Weather is gucci <br/>"
+                    } else {
+                        document.getElementById('conditions').innerHTML = "Issa bad weather <br/> ";
+                    }
+                }
 
-  <script>//makes the google maps
-  function initMap() {
-    var queriedLocation = {lat: latitude, lng: longitude};
-    var map = new google.maps.Map(document.getElementById('map'), {
-      zoom: 15,
-      center: queriedLocation
-    });
-    var marker = new google.maps.Marker({
-      position: queriedLocation,
-      map: map
-    });
-  }
+                renderCurrentWeather(currentWeather); //writes to see if weather is classified as good
+                //displays precipitation
+                var twentyFourHourPrecipitation = parseFloat(wundergroundCall.current_observation.precip_today_metric);
+                //would this work in to predict weather conditions even if dry?
+                document.getElementById('rain').innerHTML = "24 Hour Precipitation : " + twentyFourHourPrecipitation + "</br>";
 
-  var goodWeather = ["clear","cloudy","sunny","partlysunny","partlycloudy","mostlysunny","mostlycloudy", "rainy"];
-  var currentWeather = false;
+    </script>
 
-  function currentWeatherGood(){
-    var condition = wundergroundCall.current_observation.weather;
-    for (var i = 0; i < goodWeather.length; i++) {
-      if (condition.toLowerCase() == goodWeather[i]){
-        currentWeather = true;
+    <script>
+      // This example requires the Places library. Include the libraries=places
+      // parameter when you first load the API. For example:
+      // <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places">
+
+      var map;
+      var infowindow;
+
+      function initMap() {
+        var queriedLocation = {lat: latitude, lng: longitude};
+
+        map = new google.maps.Map(document.getElementById('map'), {
+          center: queriedLocation,
+          zoom: 15
+        });
+
+        infowindow = new google.maps.InfoWindow();
+        var service = new google.maps.places.PlacesService(map);
+        service.nearbySearch({
+          location: queriedLocation,
+          radius: 500,
+          type: ['bar','aquarium','mosque']
+        }, callback);
       }
-    }
-  }
 
-  currentWeatherGood();
+      function callback(results, status) {
+        if (status === google.maps.places.PlacesServiceStatus.OK) {
+          for (var i = 0; i < results.length; i++) {
+            createMarker(results[i]);
+          }
+        }
+      }
 
-  function isCurrentWeatherGood(currentWeather){
-    if (currentWeather){
-      document.getElementById('conditions').innerHTML = "Weather is gucci <br/>"
-    }
-    else{
-      document.getElementById('conditions').innerHTML = "Issa bad weather <br/> ";
-    }
-  }
+      function createMarker(place) {
+        var placeLoc = place.geometry.location;
+        var marker = new google.maps.Marker({
+          map: map,
+          position: place.geometry.location
+        });
 
-  isCurrentWeatherGood(currentWeather);
-
-
-  var twentyFourHourPrecipitation =  parseFloat(wundergroundCall.current_observation.precip_today_metric);
-  //would this work in to predict weather conditions even if dry?
-  document.getElementById('rain').innerHTML = "24 Hour Precipitation :" + twentyFourHourPrecipitation + "</br>";
-
-
-  //
-  // function initMap2() {
-  //
-  //     var queriedLocation = {lat: latitude, lng: longitude};
-  //     var map2 = new google.maps.Map(document.getElementById('map2'), {
-  //       zoom: 4,
-  //       center: queriedLocation
-  //     });
-  //     var marker = new google.maps.Marker({
-  //       position: queriedLocation,
-  //       map: map2
-  //     });
-  //   }
-  </script>
+        google.maps.event.addListener(marker, 'click', function() {
+          infowindow.setContent(place.name);
+          infowindow.open(map, this);
+        });
+      }
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB6JOHDECt2ZLqraMNaS4vHjmNxNkwPpFE&libraries=places&callback=initMap" async defer></script>
 
 </body>
+
 </html>
